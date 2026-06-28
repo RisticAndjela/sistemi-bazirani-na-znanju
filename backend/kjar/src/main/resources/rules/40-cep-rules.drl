@@ -7,21 +7,33 @@ import com.sbnz.model.RespiratoryAssessmentEvent;
 rule "cep rapid oxygen drop in 2h"
 salience 130
 when
-    $c : ChildProfile($id : childId)
+    ChildProfile($id : childId)
     $e1 : RespiratoryAssessmentEvent($spo1 : spo2, childId == $id)
-    $e2 : RespiratoryAssessmentEvent(this != $e1, $spo2 : spo2, childId == $id, $spo2 <= $spo1 - 2, this after[0s,2h] $e1)
+    RespiratoryAssessmentEvent(this != $e1, $spo2 : spo2, childId == $id, $spo2 <= $spo1 - 2, this after[0s,2h] $e1)
     not ClinicalSignal(childId == $id, type == "RAPID_OXYGEN_DROP_2H")
 then
     insert(new ClinicalSignal($id, "RAPID_OXYGEN_DROP_2H", "oxygen saturation dropped by at least 2 points within 2h"));
 end
 
-rule "cep breathing effort escalation in 6h"
+rule "cep breathing effort escalation in 6h from missing chest indrawing"
 salience 125
 when
-    $c : ChildProfile($id : childId)
-    $e1 : RespiratoryAssessmentEvent($chest1 : chestIndrawing, $grunting1 : grunting, childId == $id)
-    $e2 : RespiratoryAssessmentEvent(this != $e1, childId == $id, chestIndrawing == true, grunting == true, this after[0s,6h] $e1)
-    eval(!$chest1 || !$grunting1)
+    ChildProfile($id : childId)
+    $e1 : RespiratoryAssessmentEvent($chest1 : chestIndrawing, childId == $id)
+    RespiratoryAssessmentEvent(this != $e1, childId == $id, chestIndrawing == true, grunting == true, this after[0s,6h] $e1)
+    eval(!$chest1)
+    not ClinicalSignal(childId == $id, type == "BREATHING_EFFORT_ESCALATION_6H")
+then
+    insert(new ClinicalSignal($id, "BREATHING_EFFORT_ESCALATION_6H", "breathing effort worsened to combined chest indrawing and grunting within 6h"));
+end
+
+rule "cep breathing effort escalation in 6h from missing grunting"
+salience 125
+when
+    ChildProfile($id : childId)
+    $e1 : RespiratoryAssessmentEvent($grunting1 : grunting, childId == $id)
+    RespiratoryAssessmentEvent(this != $e1, childId == $id, chestIndrawing == true, grunting == true, this after[0s,6h] $e1)
+    eval(!$grunting1)
     not ClinicalSignal(childId == $id, type == "BREATHING_EFFORT_ESCALATION_6H")
 then
     insert(new ClinicalSignal($id, "BREATHING_EFFORT_ESCALATION_6H", "breathing effort worsened to combined chest indrawing and grunting within 6h"));
@@ -30,35 +42,86 @@ end
 rule "cep persistent low saturation in 6h"
 salience 124
 when
-    $c : ChildProfile($id : childId)
+    ChildProfile($id : childId)
     $e1 : RespiratoryAssessmentEvent(childId == $id, spo2 <= 93)
-    $e2 : RespiratoryAssessmentEvent(this != $e1, childId == $id, spo2 <= 93, this after[0s,6h] $e1)
+    RespiratoryAssessmentEvent(this != $e1, childId == $id, spo2 <= 93, this after[0s,6h] $e1)
     not ClinicalSignal(childId == $id, type == "PERSISTENT_LOW_SATURATION_6H")
 then
     insert(new ClinicalSignal($id, "PERSISTENT_LOW_SATURATION_6H", "oxygen saturation remained at or below 93 within repeated assessments over 6h"));
 end
 
-rule "cep persistent tachypnea in 12h"
+rule "cep persistent tachypnea in 12h 2-3 months"
 salience 120
 when
-    $c : ChildProfile($id : childId, $age : ageInMonths)
-    $e1 : RespiratoryAssessmentEvent(childId == $id,
-        ((($age >= 2 && $age <= 3) && respiratoryRate >= 50) ||
-         (($age >= 4 && $age <= 5) && respiratoryRate >= 50) ||
-         (($age >= 6 && $age <= 11) && respiratoryRate >= 50) ||
-         (($age >= 12 && $age <= 18) && respiratoryRate >= 40) ||
-         (($age >= 19 && $age <= 24) && respiratoryRate >= 40) ||
-         (($age >= 25 && $age <= 36) && respiratoryRate >= 40) ||
-         (($age >= 37 && $age <= 60) && respiratoryRate >= 40)))
-    $e2 : RespiratoryAssessmentEvent(this != $e1, childId == $id,
-        ((($age >= 2 && $age <= 3) && respiratoryRate >= 50) ||
-         (($age >= 4 && $age <= 5) && respiratoryRate >= 50) ||
-         (($age >= 6 && $age <= 11) && respiratoryRate >= 50) ||
-         (($age >= 12 && $age <= 18) && respiratoryRate >= 40) ||
-         (($age >= 19 && $age <= 24) && respiratoryRate >= 40) ||
-         (($age >= 25 && $age <= 36) && respiratoryRate >= 40) ||
-         (($age >= 37 && $age <= 60) && respiratoryRate >= 40)),
-        this after[0s,12h] $e1)
+    ChildProfile($id : childId, ageInMonths >= 2, ageInMonths <= 3)
+    $e1 : RespiratoryAssessmentEvent(childId == $id, respiratoryRate >= 50)
+    RespiratoryAssessmentEvent(this != $e1, childId == $id, respiratoryRate >= 50, this after[0s,12h] $e1)
+    not ClinicalSignal(childId == $id, type == "PERSISTENT_TACHYPNEA_12H")
+then
+    insert(new ClinicalSignal($id, "PERSISTENT_TACHYPNEA_12H", "tachypnea persisted across events within 12h window"));
+end
+
+rule "cep persistent tachypnea in 12h 4-5 months"
+salience 120
+when
+    ChildProfile($id : childId, ageInMonths >= 4, ageInMonths <= 5)
+    $e1 : RespiratoryAssessmentEvent(childId == $id, respiratoryRate >= 50)
+    RespiratoryAssessmentEvent(this != $e1, childId == $id, respiratoryRate >= 50, this after[0s,12h] $e1)
+    not ClinicalSignal(childId == $id, type == "PERSISTENT_TACHYPNEA_12H")
+then
+    insert(new ClinicalSignal($id, "PERSISTENT_TACHYPNEA_12H", "tachypnea persisted across events within 12h window"));
+end
+
+rule "cep persistent tachypnea in 12h 6-11 months"
+salience 120
+when
+    ChildProfile($id : childId, ageInMonths >= 6, ageInMonths <= 11)
+    $e1 : RespiratoryAssessmentEvent(childId == $id, respiratoryRate >= 50)
+    RespiratoryAssessmentEvent(this != $e1, childId == $id, respiratoryRate >= 50, this after[0s,12h] $e1)
+    not ClinicalSignal(childId == $id, type == "PERSISTENT_TACHYPNEA_12H")
+then
+    insert(new ClinicalSignal($id, "PERSISTENT_TACHYPNEA_12H", "tachypnea persisted across events within 12h window"));
+end
+
+rule "cep persistent tachypnea in 12h 12-18 months"
+salience 120
+when
+    ChildProfile($id : childId, ageInMonths >= 12, ageInMonths <= 18)
+    $e1 : RespiratoryAssessmentEvent(childId == $id, respiratoryRate >= 40)
+    RespiratoryAssessmentEvent(this != $e1, childId == $id, respiratoryRate >= 40, this after[0s,12h] $e1)
+    not ClinicalSignal(childId == $id, type == "PERSISTENT_TACHYPNEA_12H")
+then
+    insert(new ClinicalSignal($id, "PERSISTENT_TACHYPNEA_12H", "tachypnea persisted across events within 12h window"));
+end
+
+rule "cep persistent tachypnea in 12h 19-24 months"
+salience 120
+when
+    ChildProfile($id : childId, ageInMonths >= 19, ageInMonths <= 24)
+    $e1 : RespiratoryAssessmentEvent(childId == $id, respiratoryRate >= 40)
+    RespiratoryAssessmentEvent(this != $e1, childId == $id, respiratoryRate >= 40, this after[0s,12h] $e1)
+    not ClinicalSignal(childId == $id, type == "PERSISTENT_TACHYPNEA_12H")
+then
+    insert(new ClinicalSignal($id, "PERSISTENT_TACHYPNEA_12H", "tachypnea persisted across events within 12h window"));
+end
+
+rule "cep persistent tachypnea in 12h 25-36 months"
+salience 120
+when
+    ChildProfile($id : childId, ageInMonths >= 25, ageInMonths <= 36)
+    $e1 : RespiratoryAssessmentEvent(childId == $id, respiratoryRate >= 40)
+    RespiratoryAssessmentEvent(this != $e1, childId == $id, respiratoryRate >= 40, this after[0s,12h] $e1)
+    not ClinicalSignal(childId == $id, type == "PERSISTENT_TACHYPNEA_12H")
+then
+    insert(new ClinicalSignal($id, "PERSISTENT_TACHYPNEA_12H", "tachypnea persisted across events within 12h window"));
+end
+
+rule "cep persistent tachypnea in 12h 37-60 months"
+salience 120
+when
+    ChildProfile($id : childId, ageInMonths >= 37, ageInMonths <= 60)
+    $e1 : RespiratoryAssessmentEvent(childId == $id, respiratoryRate >= 40)
+    RespiratoryAssessmentEvent(this != $e1, childId == $id, respiratoryRate >= 40, this after[0s,12h] $e1)
     not ClinicalSignal(childId == $id, type == "PERSISTENT_TACHYPNEA_12H")
 then
     insert(new ClinicalSignal($id, "PERSISTENT_TACHYPNEA_12H", "tachypnea persisted across events within 12h window"));

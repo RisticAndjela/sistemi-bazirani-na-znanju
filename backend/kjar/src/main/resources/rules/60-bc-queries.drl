@@ -40,59 +40,93 @@ query "hasLowRiskAction"(Long $childId)
 end
 
 query "getRespiratoryCategories"(Long $childId, String $type, String $reason)
-    ClinicalSignal(childId == $childId, type == $type, reason == $reason)
-    eval($type == "RR_BORDERLINE" ||
-         $type == "TACHYPNEA" ||
-         $type == "TACHYPNEA_SEVERE" ||
-         $type == "BREATHING_EFFORT_MILD" ||
-         $type == "BREATHING_EFFORT_SEVERE" ||
-         $type == "OXYGEN_MONITOR_ZONE" ||
-         $type == "HYPOXEMIA_MODERATE" ||
-         $type == "HYPOXEMIA_SEVERE" ||
-         $type == "RAPID_OXYGEN_DROP_2H" ||
-         $type == "BREATHING_EFFORT_ESCALATION_6H" ||
-         $type == "PERSISTENT_LOW_SATURATION_6H" ||
-         $type == "PERSISTENT_TACHYPNEA_12H" ||
-         $type == "RESP_DISTRESS_GRUNTING" ||
-         $type == "RESP_DISTRESS_INDRAWING")
+    ClinicalSignal(childId == $childId, $type : type, $reason : reason, type == "RR_BORDERLINE")
+or
+    ClinicalSignal(childId == $childId, $type : type, $reason : reason, type == "TACHYPNEA")
+or
+    ClinicalSignal(childId == $childId, $type : type, $reason : reason, type == "TACHYPNEA_SEVERE")
+or
+    ClinicalSignal(childId == $childId, $type : type, $reason : reason, type == "BREATHING_EFFORT_MILD")
+or
+    ClinicalSignal(childId == $childId, $type : type, $reason : reason, type == "BREATHING_EFFORT_SEVERE")
+or
+    ClinicalSignal(childId == $childId, $type : type, $reason : reason, type == "OXYGEN_MONITOR_ZONE")
+or
+    ClinicalSignal(childId == $childId, $type : type, $reason : reason, type == "HYPOXEMIA_MODERATE")
+or
+    ClinicalSignal(childId == $childId, $type : type, $reason : reason, type == "HYPOXEMIA_SEVERE")
+or
+    ClinicalSignal(childId == $childId, $type : type, $reason : reason, type == "RAPID_OXYGEN_DROP_2H")
+or
+    ClinicalSignal(childId == $childId, $type : type, $reason : reason, type == "BREATHING_EFFORT_ESCALATION_6H")
+or
+    ClinicalSignal(childId == $childId, $type : type, $reason : reason, type == "PERSISTENT_LOW_SATURATION_6H")
+or
+    ClinicalSignal(childId == $childId, $type : type, $reason : reason, type == "PERSISTENT_TACHYPNEA_12H")
+or
+    ClinicalSignal(childId == $childId, $type : type, $reason : reason, type == "RESP_DISTRESS_GRUNTING")
+or
+    ClinicalSignal(childId == $childId, $type : type, $reason : reason, type == "RESP_DISTRESS_INDRAWING")
 end
 
 query "getHydrationCategories"(Long $childId, String $type, String $reason)
-    ClinicalSignal(childId == $childId, type == $type, reason == $reason)
-    eval($type == "HYDRATION_MILD" ||
-         $type == "HYDRATION_MODERATE" ||
-         $type == "HYDRATION_SEVERE" ||
-         $type == "FEEDING_REFUSAL_HIGH_RISK")
+    ClinicalSignal(childId == $childId, $type : type, $reason : reason, type == "HYDRATION_MILD")
+or
+    ClinicalSignal(childId == $childId, $type : type, $reason : reason, type == "HYDRATION_MODERATE")
+or
+    ClinicalSignal(childId == $childId, $type : type, $reason : reason, type == "HYDRATION_SEVERE")
+or
+    ClinicalSignal(childId == $childId, $type : type, $reason : reason, type == "FEEDING_REFUSAL_HIGH_RISK")
 end
 
 query "getRiskProfileCategories"(Long $childId, String $type, String $reason)
-    ClinicalSignal(childId == $childId, type == $type, reason == $reason)
-    eval($type == "RISK_PROFILE_HIGH" ||
-         $type == "AGE_BAND_2_3_MONTHS" ||
-         $type == "AGE_BAND_4_5_MONTHS" ||
-         $type == "AGE_BAND_6_11_MONTHS" ||
-         $type == "AGE_BAND_12_18_MONTHS" ||
-         $type == "AGE_BAND_19_24_MONTHS" ||
-         $type == "AGE_BAND_25_36_MONTHS" ||
-         $type == "AGE_BAND_37_60_MONTHS")
+    ClinicalSignal(childId == $childId, $type : type, $reason : reason, type == "RISK_PROFILE_HIGH")
+or
+    ClinicalSignal(childId == $childId, $type : type, $reason : reason, type == "AGE_BAND_2_3_MONTHS")
+or
+    ClinicalSignal(childId == $childId, $type : type, $reason : reason, type == "AGE_BAND_4_5_MONTHS")
+or
+    ClinicalSignal(childId == $childId, $type : type, $reason : reason, type == "AGE_BAND_6_11_MONTHS")
+or
+    ClinicalSignal(childId == $childId, $type : type, $reason : reason, type == "AGE_BAND_12_18_MONTHS")
+or
+    ClinicalSignal(childId == $childId, $type : type, $reason : reason, type == "AGE_BAND_19_24_MONTHS")
+or
+    ClinicalSignal(childId == $childId, $type : type, $reason : reason, type == "AGE_BAND_25_36_MONTHS")
+or
+    ClinicalSignal(childId == $childId, $type : type, $reason : reason, type == "AGE_BAND_37_60_MONTHS")
 end
 
 query "getHomeMonitoringBlockers"(Long $childId, String $blockerType, String $blockerReason)
-    ClinicalSignal(childId == $childId, type == $blockerType, reason == $blockerReason)
-    eval($blockerType == "TACHYPNEA" ||
-         $blockerType == "TACHYPNEA_SEVERE" ||
-         $blockerType == "HYPOXEMIA_MODERATE" ||
-         $blockerType == "HYPOXEMIA_SEVERE" ||
-         $blockerType == "BREATHING_EFFORT_MILD" ||
-         $blockerType == "BREATHING_EFFORT_SEVERE" ||
-         $blockerType == "HYDRATION_MODERATE" ||
-         $blockerType == "HYDRATION_SEVERE" ||
-         $blockerType == "FEEDING_REFUSAL_HIGH_RISK" ||
-         $blockerType == "EMERGENCY_RED_FLAG" ||
-         $blockerType == "RAPID_OXYGEN_DROP_2H" ||
-         $blockerType == "BREATHING_EFFORT_ESCALATION_6H" ||
-         $blockerType == "PERSISTENT_LOW_SATURATION_6H" ||
-         $blockerType == "PERSISTENT_TACHYPNEA_12H" ||
-         $blockerType == "RESP_DISTRESS_GRUNTING" ||
-         $blockerType == "RESP_DISTRESS_INDRAWING")
+    ClinicalSignal(childId == $childId, $blockerType : type, $blockerReason : reason, type == "TACHYPNEA")
+or
+    ClinicalSignal(childId == $childId, $blockerType : type, $blockerReason : reason, type == "TACHYPNEA_SEVERE")
+or
+    ClinicalSignal(childId == $childId, $blockerType : type, $blockerReason : reason, type == "HYPOXEMIA_MODERATE")
+or
+    ClinicalSignal(childId == $childId, $blockerType : type, $blockerReason : reason, type == "HYPOXEMIA_SEVERE")
+or
+    ClinicalSignal(childId == $childId, $blockerType : type, $blockerReason : reason, type == "BREATHING_EFFORT_MILD")
+or
+    ClinicalSignal(childId == $childId, $blockerType : type, $blockerReason : reason, type == "BREATHING_EFFORT_SEVERE")
+or
+    ClinicalSignal(childId == $childId, $blockerType : type, $blockerReason : reason, type == "HYDRATION_MODERATE")
+or
+    ClinicalSignal(childId == $childId, $blockerType : type, $blockerReason : reason, type == "HYDRATION_SEVERE")
+or
+    ClinicalSignal(childId == $childId, $blockerType : type, $blockerReason : reason, type == "FEEDING_REFUSAL_HIGH_RISK")
+or
+    ClinicalSignal(childId == $childId, $blockerType : type, $blockerReason : reason, type == "EMERGENCY_RED_FLAG")
+or
+    ClinicalSignal(childId == $childId, $blockerType : type, $blockerReason : reason, type == "RAPID_OXYGEN_DROP_2H")
+or
+    ClinicalSignal(childId == $childId, $blockerType : type, $blockerReason : reason, type == "BREATHING_EFFORT_ESCALATION_6H")
+or
+    ClinicalSignal(childId == $childId, $blockerType : type, $blockerReason : reason, type == "PERSISTENT_LOW_SATURATION_6H")
+or
+    ClinicalSignal(childId == $childId, $blockerType : type, $blockerReason : reason, type == "PERSISTENT_TACHYPNEA_12H")
+or
+    ClinicalSignal(childId == $childId, $blockerType : type, $blockerReason : reason, type == "RESP_DISTRESS_GRUNTING")
+or
+    ClinicalSignal(childId == $childId, $blockerType : type, $blockerReason : reason, type == "RESP_DISTRESS_INDRAWING")
 end

@@ -4,52 +4,211 @@ import com.sbnz.model.ChildProfile;
 import com.sbnz.model.ClinicalSignal;
 import com.sbnz.model.RespiratoryAssessmentEvent;
 
-rule "vitals rr borderline"
+rule "vitals rr borderline 2-3 months"
 salience 80
 when
-    $c : ChildProfile($id : childId, $age : ageInMonths)
-    RespiratoryAssessmentEvent(childId == $id,
-      ((($age >= 2 && $age <= 3) && respiratoryRate >= 46 && respiratoryRate < 50) ||
-       (($age >= 4 && $age <= 5) && respiratoryRate >= 46 && respiratoryRate < 50) ||
-       (($age >= 6 && $age <= 11) && respiratoryRate >= 46 && respiratoryRate < 50) ||
-       (($age >= 12 && $age <= 18) && respiratoryRate >= 36 && respiratoryRate < 40) ||
-       (($age >= 19 && $age <= 24) && respiratoryRate >= 36 && respiratoryRate < 40) ||
-       (($age >= 25 && $age <= 36) && respiratoryRate >= 36 && respiratoryRate < 40) ||
-       (($age >= 37 && $age <= 60) && respiratoryRate >= 36 && respiratoryRate < 40)))
+    ChildProfile($id : childId, ageInMonths >= 2, ageInMonths <= 3)
+    RespiratoryAssessmentEvent(childId == $id, respiratoryRate >= 46, respiratoryRate < 50)
     not ClinicalSignal(childId == $id, type == "RR_BORDERLINE")
 then
     insert(new ClinicalSignal($id, "RR_BORDERLINE", "respiratory rate is close to tachypnea threshold"));
 end
 
-rule "vitals tachypnea"
+rule "vitals rr borderline 4-5 months"
+salience 80
+when
+    ChildProfile($id : childId, ageInMonths >= 4, ageInMonths <= 5)
+    RespiratoryAssessmentEvent(childId == $id, respiratoryRate >= 46, respiratoryRate < 50)
+    not ClinicalSignal(childId == $id, type == "RR_BORDERLINE")
+then
+    insert(new ClinicalSignal($id, "RR_BORDERLINE", "respiratory rate is close to tachypnea threshold"));
+end
+
+rule "vitals rr borderline 6-11 months"
+salience 80
+when
+    ChildProfile($id : childId, ageInMonths >= 6, ageInMonths <= 11)
+    RespiratoryAssessmentEvent(childId == $id, respiratoryRate >= 46, respiratoryRate < 50)
+    not ClinicalSignal(childId == $id, type == "RR_BORDERLINE")
+then
+    insert(new ClinicalSignal($id, "RR_BORDERLINE", "respiratory rate is close to tachypnea threshold"));
+end
+
+rule "vitals rr borderline 12-18 months"
+salience 80
+when
+    ChildProfile($id : childId, ageInMonths >= 12, ageInMonths <= 18)
+    RespiratoryAssessmentEvent(childId == $id, respiratoryRate >= 36, respiratoryRate < 40)
+    not ClinicalSignal(childId == $id, type == "RR_BORDERLINE")
+then
+    insert(new ClinicalSignal($id, "RR_BORDERLINE", "respiratory rate is close to tachypnea threshold"));
+end
+
+rule "vitals rr borderline 19-24 months"
+salience 80
+when
+    ChildProfile($id : childId, ageInMonths >= 19, ageInMonths <= 24)
+    RespiratoryAssessmentEvent(childId == $id, respiratoryRate >= 36, respiratoryRate < 40)
+    not ClinicalSignal(childId == $id, type == "RR_BORDERLINE")
+then
+    insert(new ClinicalSignal($id, "RR_BORDERLINE", "respiratory rate is close to tachypnea threshold"));
+end
+
+rule "vitals rr borderline 25-36 months"
+salience 80
+when
+    ChildProfile($id : childId, ageInMonths >= 25, ageInMonths <= 36)
+    RespiratoryAssessmentEvent(childId == $id, respiratoryRate >= 36, respiratoryRate < 40)
+    not ClinicalSignal(childId == $id, type == "RR_BORDERLINE")
+then
+    insert(new ClinicalSignal($id, "RR_BORDERLINE", "respiratory rate is close to tachypnea threshold"));
+end
+
+rule "vitals rr borderline 37-60 months"
+salience 80
+when
+    ChildProfile($id : childId, ageInMonths >= 37, ageInMonths <= 60)
+    RespiratoryAssessmentEvent(childId == $id, respiratoryRate >= 36, respiratoryRate < 40)
+    not ClinicalSignal(childId == $id, type == "RR_BORDERLINE")
+then
+    insert(new ClinicalSignal($id, "RR_BORDERLINE", "respiratory rate is close to tachypnea threshold"));
+end
+
+rule "vitals tachypnea 2-3 months"
 salience 85
 when
-    $c : ChildProfile($id : childId, $age : ageInMonths)
-    RespiratoryAssessmentEvent(childId == $id,
-      ((($age >= 2 && $age <= 3) && respiratoryRate >= 50 && respiratoryRate < 70) ||
-       (($age >= 4 && $age <= 5) && respiratoryRate >= 50 && respiratoryRate < 70) ||
-       (($age >= 6 && $age <= 11) && respiratoryRate >= 50 && respiratoryRate < 70) ||
-       (($age >= 12 && $age <= 18) && respiratoryRate >= 40 && respiratoryRate < 65) ||
-       (($age >= 19 && $age <= 24) && respiratoryRate >= 40 && respiratoryRate < 65) ||
-       (($age >= 25 && $age <= 36) && respiratoryRate >= 40 && respiratoryRate < 60) ||
-       (($age >= 37 && $age <= 60) && respiratoryRate >= 40 && respiratoryRate < 60)))
+    ChildProfile($id : childId, ageInMonths >= 2, ageInMonths <= 3)
+    RespiratoryAssessmentEvent(childId == $id, respiratoryRate >= 50, respiratoryRate < 70)
     not ClinicalSignal(childId == $id, type == "TACHYPNEA")
 then
     insert(new ClinicalSignal($id, "TACHYPNEA", "respiratory rate is above age-adjusted tachypnea threshold"));
 end
 
-rule "vitals severe tachypnea"
+rule "vitals tachypnea 4-5 months"
+salience 85
+when
+    ChildProfile($id : childId, ageInMonths >= 4, ageInMonths <= 5)
+    RespiratoryAssessmentEvent(childId == $id, respiratoryRate >= 50, respiratoryRate < 70)
+    not ClinicalSignal(childId == $id, type == "TACHYPNEA")
+then
+    insert(new ClinicalSignal($id, "TACHYPNEA", "respiratory rate is above age-adjusted tachypnea threshold"));
+end
+
+rule "vitals tachypnea 6-11 months"
+salience 85
+when
+    ChildProfile($id : childId, ageInMonths >= 6, ageInMonths <= 11)
+    RespiratoryAssessmentEvent(childId == $id, respiratoryRate >= 50, respiratoryRate < 70)
+    not ClinicalSignal(childId == $id, type == "TACHYPNEA")
+then
+    insert(new ClinicalSignal($id, "TACHYPNEA", "respiratory rate is above age-adjusted tachypnea threshold"));
+end
+
+rule "vitals tachypnea 12-18 months"
+salience 85
+when
+    ChildProfile($id : childId, ageInMonths >= 12, ageInMonths <= 18)
+    RespiratoryAssessmentEvent(childId == $id, respiratoryRate >= 40, respiratoryRate < 65)
+    not ClinicalSignal(childId == $id, type == "TACHYPNEA")
+then
+    insert(new ClinicalSignal($id, "TACHYPNEA", "respiratory rate is above age-adjusted tachypnea threshold"));
+end
+
+rule "vitals tachypnea 19-24 months"
+salience 85
+when
+    ChildProfile($id : childId, ageInMonths >= 19, ageInMonths <= 24)
+    RespiratoryAssessmentEvent(childId == $id, respiratoryRate >= 40, respiratoryRate < 65)
+    not ClinicalSignal(childId == $id, type == "TACHYPNEA")
+then
+    insert(new ClinicalSignal($id, "TACHYPNEA", "respiratory rate is above age-adjusted tachypnea threshold"));
+end
+
+rule "vitals tachypnea 25-36 months"
+salience 85
+when
+    ChildProfile($id : childId, ageInMonths >= 25, ageInMonths <= 36)
+    RespiratoryAssessmentEvent(childId == $id, respiratoryRate >= 40, respiratoryRate < 60)
+    not ClinicalSignal(childId == $id, type == "TACHYPNEA")
+then
+    insert(new ClinicalSignal($id, "TACHYPNEA", "respiratory rate is above age-adjusted tachypnea threshold"));
+end
+
+rule "vitals tachypnea 37-60 months"
+salience 85
+when
+    ChildProfile($id : childId, ageInMonths >= 37, ageInMonths <= 60)
+    RespiratoryAssessmentEvent(childId == $id, respiratoryRate >= 40, respiratoryRate < 60)
+    not ClinicalSignal(childId == $id, type == "TACHYPNEA")
+then
+    insert(new ClinicalSignal($id, "TACHYPNEA", "respiratory rate is above age-adjusted tachypnea threshold"));
+end
+
+rule "vitals severe tachypnea 2-3 months"
 salience 86
 when
-    $c : ChildProfile($id : childId, $age : ageInMonths)
-    RespiratoryAssessmentEvent(childId == $id,
-      ((($age >= 2 && $age <= 3) && respiratoryRate >= 70) ||
-       (($age >= 4 && $age <= 5) && respiratoryRate >= 70) ||
-       (($age >= 6 && $age <= 11) && respiratoryRate >= 70) ||
-       (($age >= 12 && $age <= 18) && respiratoryRate >= 65) ||
-       (($age >= 19 && $age <= 24) && respiratoryRate >= 65) ||
-       (($age >= 25 && $age <= 36) && respiratoryRate >= 60) ||
-       (($age >= 37 && $age <= 60) && respiratoryRate >= 60)))
+    ChildProfile($id : childId, ageInMonths >= 2, ageInMonths <= 3)
+    RespiratoryAssessmentEvent(childId == $id, respiratoryRate >= 70)
+    not ClinicalSignal(childId == $id, type == "TACHYPNEA_SEVERE")
+then
+    insert(new ClinicalSignal($id, "TACHYPNEA_SEVERE", "respiratory rate is in severe range"));
+end
+
+rule "vitals severe tachypnea 4-5 months"
+salience 86
+when
+    ChildProfile($id : childId, ageInMonths >= 4, ageInMonths <= 5)
+    RespiratoryAssessmentEvent(childId == $id, respiratoryRate >= 70)
+    not ClinicalSignal(childId == $id, type == "TACHYPNEA_SEVERE")
+then
+    insert(new ClinicalSignal($id, "TACHYPNEA_SEVERE", "respiratory rate is in severe range"));
+end
+
+rule "vitals severe tachypnea 6-11 months"
+salience 86
+when
+    ChildProfile($id : childId, ageInMonths >= 6, ageInMonths <= 11)
+    RespiratoryAssessmentEvent(childId == $id, respiratoryRate >= 70)
+    not ClinicalSignal(childId == $id, type == "TACHYPNEA_SEVERE")
+then
+    insert(new ClinicalSignal($id, "TACHYPNEA_SEVERE", "respiratory rate is in severe range"));
+end
+
+rule "vitals severe tachypnea 12-18 months"
+salience 86
+when
+    ChildProfile($id : childId, ageInMonths >= 12, ageInMonths <= 18)
+    RespiratoryAssessmentEvent(childId == $id, respiratoryRate >= 65)
+    not ClinicalSignal(childId == $id, type == "TACHYPNEA_SEVERE")
+then
+    insert(new ClinicalSignal($id, "TACHYPNEA_SEVERE", "respiratory rate is in severe range"));
+end
+
+rule "vitals severe tachypnea 19-24 months"
+salience 86
+when
+    ChildProfile($id : childId, ageInMonths >= 19, ageInMonths <= 24)
+    RespiratoryAssessmentEvent(childId == $id, respiratoryRate >= 65)
+    not ClinicalSignal(childId == $id, type == "TACHYPNEA_SEVERE")
+then
+    insert(new ClinicalSignal($id, "TACHYPNEA_SEVERE", "respiratory rate is in severe range"));
+end
+
+rule "vitals severe tachypnea 25-36 months"
+salience 86
+when
+    ChildProfile($id : childId, ageInMonths >= 25, ageInMonths <= 36)
+    RespiratoryAssessmentEvent(childId == $id, respiratoryRate >= 60)
+    not ClinicalSignal(childId == $id, type == "TACHYPNEA_SEVERE")
+then
+    insert(new ClinicalSignal($id, "TACHYPNEA_SEVERE", "respiratory rate is in severe range"));
+end
+
+rule "vitals severe tachypnea 37-60 months"
+salience 86
+when
+    ChildProfile($id : childId, ageInMonths >= 37, ageInMonths <= 60)
+    RespiratoryAssessmentEvent(childId == $id, respiratoryRate >= 60)
     not ClinicalSignal(childId == $id, type == "TACHYPNEA_SEVERE")
 then
     insert(new ClinicalSignal($id, "TACHYPNEA_SEVERE", "respiratory rate is in severe range"));
@@ -58,8 +217,8 @@ end
 rule "vitals oxygen monitor zone"
 salience 70
 when
-    $c : ChildProfile($id : childId)
-    RespiratoryAssessmentEvent(childId == $id, spo2 <= 95 && spo2 > 93)
+    ChildProfile($id : childId)
+    RespiratoryAssessmentEvent(childId == $id, spo2 <= 95, spo2 > 93)
     not ClinicalSignal(childId == $id, type == "OXYGEN_MONITOR_ZONE")
 then
     insert(new ClinicalSignal($id, "OXYGEN_MONITOR_ZONE", "oxygen is borderline and needs monitoring"));
@@ -68,8 +227,8 @@ end
 rule "vitals hypoxemia moderate"
 salience 71
 when
-    $c : ChildProfile($id : childId)
-    RespiratoryAssessmentEvent(childId == $id, spo2 <= 93 && spo2 >= 90)
+    ChildProfile($id : childId)
+    RespiratoryAssessmentEvent(childId == $id, spo2 <= 93, spo2 >= 90)
     not ClinicalSignal(childId == $id, type == "HYPOXEMIA_MODERATE")
 then
     insert(new ClinicalSignal($id, "HYPOXEMIA_MODERATE", "oxygen is in moderate hypoxemia range"));
@@ -78,29 +237,60 @@ end
 rule "vitals hypoxemia severe"
 salience 1000
 when
-    $c : ChildProfile($id : childId)
+    ChildProfile($id : childId)
     RespiratoryAssessmentEvent(childId == $id, spo2 < 90)
     not ClinicalSignal(childId == $id, type == "HYPOXEMIA_SEVERE")
 then
     insert(new ClinicalSignal($id, "HYPOXEMIA_SEVERE", "oxygen is in severe hypoxemia range"));
 end
 
-rule "vitals breathing effort mild"
+rule "vitals breathing effort mild chest indrawing only"
 salience 75
 when
-    $c : ChildProfile($id : childId)
-    RespiratoryAssessmentEvent(childId == $id, chestIndrawing == true || grunting == true)
+    ChildProfile($id : childId)
+    RespiratoryAssessmentEvent(childId == $id, chestIndrawing == true, grunting == false)
     not ClinicalSignal(childId == $id, type == "BREATHING_EFFORT_MILD")
 then
     insert(new ClinicalSignal($id, "BREATHING_EFFORT_MILD", "additional breathing effort is present"));
 end
 
-rule "vitals breathing effort severe"
+rule "vitals breathing effort mild grunting only"
+salience 75
+when
+    ChildProfile($id : childId)
+    RespiratoryAssessmentEvent(childId == $id, chestIndrawing == false, grunting == true)
+    not ClinicalSignal(childId == $id, type == "BREATHING_EFFORT_MILD")
+then
+    insert(new ClinicalSignal($id, "BREATHING_EFFORT_MILD", "additional breathing effort is present"));
+end
+
+rule "vitals breathing effort mild combined"
+salience 75
+when
+    ChildProfile($id : childId)
+    RespiratoryAssessmentEvent(childId == $id, chestIndrawing == true, grunting == true)
+    not ClinicalSignal(childId == $id, type == "BREATHING_EFFORT_MILD")
+then
+    insert(new ClinicalSignal($id, "BREATHING_EFFORT_MILD", "additional breathing effort is present"));
+end
+
+rule "vitals breathing effort severe followup chest indrawing"
 salience 76
 when
-    $c : ChildProfile($id : childId)
+    ChildProfile($id : childId)
     RespiratoryAssessmentEvent($e1 : this, childId == $id, chestIndrawing == true, grunting == true)
-    RespiratoryAssessmentEvent(this != $e1, childId == $id, chestIndrawing == true || grunting == true)
+    RespiratoryAssessmentEvent(this != $e1, childId == $id, chestIndrawing == true)
+    not ClinicalSignal(childId == $id, type == "BREATHING_EFFORT_SEVERE")
+then
+    insert(new ClinicalSignal($id, "BREATHING_EFFORT_SEVERE", "persistent and severe breathing effort pattern"));
+end
+
+rule "vitals breathing effort severe followup grunting"
+salience 76
+when
+    ChildProfile($id : childId)
+    RespiratoryAssessmentEvent($e1 : this, childId == $id, chestIndrawing == true, grunting == true)
+    RespiratoryAssessmentEvent(this != $e1, childId == $id, grunting == true)
     not ClinicalSignal(childId == $id, type == "BREATHING_EFFORT_SEVERE")
 then
     insert(new ClinicalSignal($id, "BREATHING_EFFORT_SEVERE", "persistent and severe breathing effort pattern"));

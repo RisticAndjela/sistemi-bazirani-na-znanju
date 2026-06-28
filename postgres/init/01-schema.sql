@@ -1,0 +1,26 @@
+CREATE TABLE IF NOT EXISTS patient_cases (
+    child_id BIGINT PRIMARY KEY,
+    age_in_months INTEGER NOT NULL,
+    rr1 INTEGER NOT NULL,
+    spo21 INTEGER NOT NULL,
+    chest1 BOOLEAN NOT NULL,
+    grunting1 BOOLEAN NOT NULL,
+    apnea1 BOOLEAN NOT NULL,
+    cyanosis1 BOOLEAN NOT NULL,
+    rr2 INTEGER NOT NULL,
+    spo22 INTEGER NOT NULL,
+    chest2 BOOLEAN NOT NULL,
+    grunting2 BOOLEAN NOT NULL,
+    apnea2 BOOLEAN NOT NULL,
+    cyanosis2 BOOLEAN NOT NULL,
+    intake_percent INTEGER NOT NULL,
+    poor_feeding BOOLEAN NOT NULL,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS rule_run_history (
+    id BIGSERIAL PRIMARY KEY,
+    child_id BIGINT NOT NULL REFERENCES patient_cases(child_id) ON DELETE CASCADE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    report TEXT NOT NULL
+);

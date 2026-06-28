@@ -1,0 +1,242 @@
+<div class="shell">
+  <div class="aurora aurora-a"></div>
+  <div class="aurora aurora-b"></div>
+  <div class="aurora aurora-c"></div>
+
+  <header class="hero panel">
+    <div>
+      <p class="eyebrow">Web Rule Tester</p>
+      <h1>Respiratory triage desktop flow, rebuilt for the web.</h1>
+      <p class="hero-copy">
+        Same patient inputs, same presets, same session modes and the same rule-engine output, now in a colorful Angular dashboard.
+      </p>
+    </div>
+    <div class="hero-stats">
+      <div class="stat-card">
+        <span class="stat-label">API</span>
+        <strong>{{ connectionStatus() }}</strong>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Saved Patients</span>
+        <strong>{{ patients().length }}</strong>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Session Mode</span>
+        <strong>{{ labelForMode(sessionMode()) }}</strong>
+      </div>
+    </div>
+  </header>
+
+  <main class="layout" [class.loading]="loading()">
+    <aside class="panel patients-panel">
+      <div class="panel-header">
+        <div>
+          <p class="eyebrow">Patients</p>
+          <h2>Saved cases</h2>
+        </div>
+        <button class="ghost-button" (click)="refreshPatients()">Refresh</button>
+      </div>
+
+      <div class="patient-list" *ngIf="patients().length; else emptyPatients">
+        <button
+          *ngFor="let patient of patients(); trackBy: trackByPatientId"
+          class="patient-card"
+          [class.active]="patient.childId === selectedPatientId()"
+          (click)="loadPatient(patient)"
+        >
+          <span class="patient-id">#{{ patient.childId }}</span>
+          <span class="patient-meta">{{ patient.ageInMonths }} months</span>
+          <span class="patient-meta">RR {{ patient.rr2 }} / SpO2 {{ patient.spo22 }}</span>
+        </button>
+      </div>
+
+      <ng-template #emptyPatients>
+        <div class="empty-state">No patients yet. Save one from the form and it will appear here.</div>
+      </ng-template>
+    </aside>
+
+    <section class="workspace">
+      <section class="panel controls-panel">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">Input</p>
+            <h2>Patient form</h2>
+          </div>
+          <div class="feedback">{{ feedback() }}</div>
+        </div>
+
+        <div class="toolbar">
+          <div class="toolbar-group">
+            <label>Preset</label>
+            <select [ngModel]="preset()" (ngModelChange)="applyPreset($event)">
+              <option value="STANDARD">Standard preset</option>
+              <option value="CONSERVATIVE">Conservative preset</option>
+              <option value="HIGH_RISK">High-risk preset</option>
+            </select>
+          </div>
+
+          <div class="toolbar-group">
+            <label>Session mode</label>
+            <select [ngModel]="sessionMode()" (ngModelChange)="sessionMode.set($event)">
+              <option value="COMPARE_BOTH">Compare both sessions</option>
+              <option value="FRESH_ONLY">Fresh session only</option>
+              <option value="LEARNED_ONLY">Learned session only</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <label>
+            <span>Child ID</span>
+            <input type="number" [ngModel]="form().childId" (ngModelChange)="form.set({ ...form(), childId: +$event })" />
+          </label>
+          <label>
+            <span>Age in months</span>
+            <input type="number" [ngModel]="form().ageInMonths" (ngModelChange)="form.set({ ...form(), ageInMonths: +$event })" />
+          </label>
+          <label>
+            <span>Earlier RR</span>
+            <input type="number" [ngModel]="form().rr1" (ngModelChange)="form.set({ ...form(), rr1: +$event })" />
+          </label>
+          <label>
+            <span>Earlier SpO2</span>
+            <input type="number" [ngModel]="form().spo21" (ngModelChange)="form.set({ ...form(), spo21: +$event })" />
+          </label>
+          <label>
+            <span>Current RR</span>
+            <input type="number" [ngModel]="form().rr2" (ngModelChange)="form.set({ ...form(), rr2: +$event })" />
+          </label>
+          <label>
+            <span>Current SpO2</span>
+            <input type="number" [ngModel]="form().spo22" (ngModelChange)="form.set({ ...form(), spo22: +$event })" />
+          </label>
+          <label class="full">
+            <span>Hydration intake %</span>
+            <input
+              type="number"
+              [ngModel]="form().intakePercent"
+              (ngModelChange)="form.set({ ...form(), intakePercent: +$event })"
+            />
+          </label>
+        </div>
+
+        <div class="checkbox-sections">
+          <div class="check-card">
+            <h3>Earlier assessment</h3>
+            <label><input type="checkbox" [ngModel]="form().chest1" (ngModelChange)="form.set({ ...form(), chest1: $event })" />Chest indrawing</label>
+            <label><input type="checkbox" [ngModel]="form().grunting1" (ngModelChange)="form.set({ ...form(), grunting1: $event })" />Grunting</label>
+            <label><input type="checkbox" [ngModel]="form().apnea1" (ngModelChange)="form.set({ ...form(), apnea1: $event })" />Apnea</label>
+            <label><input type="checkbox" [ngModel]="form().cyanosis1" (ngModelChange)="form.set({ ...form(), cyanosis1: $event })" />Cyanosis</label>
+          </div>
+
+          <div class="check-card">
+            <h3>Current assessment</h3>
+            <label><input type="checkbox" [ngModel]="form().chest2" (ngModelChange)="form.set({ ...form(), chest2: $event })" />Chest indrawing</label>
+            <label><input type="checkbox" [ngModel]="form().grunting2" (ngModelChange)="form.set({ ...form(), grunting2: $event })" />Grunting</label>
+            <label><input type="checkbox" [ngModel]="form().apnea2" (ngModelChange)="form.set({ ...form(), apnea2: $event })" />Apnea</label>
+            <label><input type="checkbox" [ngModel]="form().cyanosis2" (ngModelChange)="form.set({ ...form(), cyanosis2: $event })" />Cyanosis</label>
+          </div>
+
+          <div class="check-card accent-card">
+            <h3>Hydration flag</h3>
+            <label><input type="checkbox" [ngModel]="form().poorFeeding" (ngModelChange)="form.set({ ...form(), poorFeeding: $event })" />Poor feeding</label>
+            <p>Use the same Boolean markers from the desktop UI so rule output stays comparable.</p>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="primary-button" [disabled]="saving()" (click)="savePatient()">
+            {{ saving() ? 'Saving...' : 'Save / Update Patient' }}
+          </button>
+          <button class="secondary-button" [disabled]="runBusy()" (click)="runRules()">
+            {{ runBusy() ? 'Running...' : 'Run Rules' }}
+          </button>
+          <button class="ghost-button" (click)="showHistory()">Show History</button>
+          <button class="ghost-button" (click)="resetLearnedSession()">Reset Learned Session</button>
+        </div>
+      </section>
+
+      <section class="panel output-panel">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">Output</p>
+            <h2>Rule engine response</h2>
+          </div>
+          <div class="view-switch">
+            <button [class.active]="activeView() === 'report'" (click)="activeView.set('report')">Report</button>
+            <button [class.active]="activeView() === 'defense'" (click)="activeView.set('defense')">Defense View</button>
+            <button [class.active]="activeView() === 'history'" (click)="activeView.set('history')">History</button>
+          </div>
+        </div>
+
+        <div *ngIf="activeView() === 'report'" class="report-view">
+          <div *ngIf="parsedSessions().length; else emptyReport" class="session-grid">
+            <article class="session-card" *ngFor="let session of parsedSessions()">
+              <h3>{{ session.title }}</h3>
+
+              <section class="session-section">
+                <h4>Summary</h4>
+                <div class="summary-chips">
+                  <span class="chip" *ngFor="let line of session.summary">{{ line }}</span>
+                </div>
+              </section>
+
+              <section class="session-section">
+                <h4>Activated rules</h4>
+                <ul>
+                  <li *ngFor="let item of session.activatedRules">{{ item }}</li>
+                </ul>
+              </section>
+
+              <section class="session-section">
+                <h4>Derived facts</h4>
+                <ul>
+                  <li *ngFor="let item of session.derivedFacts">{{ item }}</li>
+                </ul>
+              </section>
+
+              <section class="session-section">
+                <h4>Final decision</h4>
+                <div class="decision-stack">
+                  <div class="decision-pill" *ngFor="let item of session.finalDecision">{{ item }}</div>
+                </div>
+              </section>
+
+              <section class="session-section">
+                <h4>Queries</h4>
+                <div class="query-group" *ngFor="let query of session.queryGroups">
+                  <strong>{{ query.title }}</strong>
+                  <div *ngFor="let line of query.lines">{{ line }}</div>
+                </div>
+              </section>
+            </article>
+          </div>
+
+          <ng-template #emptyReport>
+            <div class="empty-state">Run the selected patient to see parsed rule output here.</div>
+          </ng-template>
+        </div>
+
+        <div *ngIf="activeView() === 'defense'" class="defense-view">
+          <div *ngIf="defenseHtml(); else emptyDefense" class="defense-frame" [innerHTML]="defenseHtml()"></div>
+          <ng-template #emptyDefense>
+            <div class="empty-state">Defense view becomes available right after a rule run.</div>
+          </ng-template>
+        </div>
+
+        <div *ngIf="activeView() === 'history'" class="history-view">
+          <div *ngIf="history().length; else emptyHistory" class="history-list">
+            <article class="history-card" *ngFor="let entry of history()">
+              <div class="history-date">{{ entry.createdAt }}</div>
+              <pre>{{ entry.report }}</pre>
+            </article>
+          </div>
+
+          <ng-template #emptyHistory>
+            <div class="empty-state">No PostgreSQL rule history yet for the selected patient.</div>
+          </ng-template>
+        </div>
+      </section>
+    </section>
+  </main>
+</div>

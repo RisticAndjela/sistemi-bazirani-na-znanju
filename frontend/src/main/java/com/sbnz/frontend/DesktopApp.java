@@ -6,6 +6,7 @@ import com.sbnz.model.HydrationIntakeEvent;
 import com.sbnz.model.Recommendation;
 import com.sbnz.model.RespiratoryAssessmentEvent;
 import com.sbnz.frontend.drools.RespiratoryKieSessionFactory;
+import com.sbnz.frontend.persistence.PostgresStorage;
 import org.kie.api.event.rule.AfterMatchFiredEvent;
 import org.kie.api.event.rule.DefaultAgendaEventListener;
 import org.kie.api.runtime.KieSession;
@@ -51,8 +52,8 @@ import java.util.Comparator;
 public class DesktopApp {
 
     private final Map<Long, PatientCase> cases = new LinkedHashMap<>();
-    private final Map<Long, List<String>> runHistory = new LinkedHashMap<>();
     private final DefaultListModel<Long> patientListModel = new DefaultListModel<>();
+    private final PostgresStorage storage = new PostgresStorage();
 
     private JTextField childIdField;
     private JTextField ageField;
@@ -81,10 +82,17 @@ public class DesktopApp {
     private final Map<Long, FactHandle> learnedHydrationFacts = new LinkedHashMap<>();
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new DesktopApp().createAndShowUI());
+        SwingUtilities.invokeLater(() -> {
+            try {
+                new DesktopApp().createAndShowUI();
+            } catch (IllegalStateException ex) {
+                JOptionPane.showMessageDialog(null, ex.getMessage(), "PostgreSQL Error", JOptionPane.ERROR_MESSAGE);
+            }
+        });
     }
 
     private void createAndShowUI() {
+        storage.initialize();
         JFrame frame = new JFrame("SBNZ Frontend - Patient Rule Tester");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(1180, 760);
@@ -169,7 +177,7 @@ public class DesktopApp {
         outputArea.setEditable(false);
         outputArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 13));
         outputArea.setBorder(new EmptyBorder(10, 10, 10, 10));
-        outputArea.setText("Select a patient and click Run Rules.\n");
+        outputArea.setText("Connected to PostgreSQL: " + storage.getConnectionSummary() + "\nSelect a patient and click Run Rules.\n");
 
         patientList = new JList<>(patientListModel);
         patientList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -202,7 +210,8 @@ public class DesktopApp {
         splitPane.setDividerLocation(260);
         frame.add(splitPane);
 
-        loadDemoCases();
+        loadCasesFromDatabase();
+        seedDemoCasesIfDatabaseEmpty();
         if (patientListModel.isEmpty()) {
             savePatientCase();
         }
@@ -216,7 +225,10 @@ public class DesktopApp {
         panel.add(input);
     }
 
-    private void loadDemoCases() {
+    private void seedDemoCasesIfDatabaseEmpty() {
+        if (storage.hasPatients()) {
+            return;
+        }
         Path path = Path.of("data", "demo-children.csv");
         if (!Files.exists(path)) {
             return;
@@ -245,13 +257,20 @@ public class DesktopApp {
                 c.cyanosis2 = Boolean.parseBoolean(p[13].trim());
                 c.intakePercent = Integer.parseInt(p[14].trim());
                 c.poorFeeding = Boolean.parseBoolean(p[15].trim());
-                cases.put(c.childId, c);
-                if (!patientListModel.contains(c.childId)) {
-                    patientListModel.addElement(c.childId);
-                }
+                storage.savePatient(c);
             }
+            loadCasesFromDatabase();
         } catch (Exception ignored) {
             // If demo file is malformed, app still starts with manual input.
+        }
+    }
+
+    private void loadCasesFromDatabase() {
+        cases.clear();
+        patientListModel.clear();
+        for (PatientCase patientCase : storage.findAllPatients()) {
+            cases.put(patientCase.childId, patientCase);
+            patientListModel.addElement(patientCase.childId);
         }
     }
 
@@ -308,13 +327,14 @@ public class DesktopApp {
     private void savePatientCase() {
         try {
             PatientCase c = readCaseFromForm();
+            storage.savePatient(c);
             cases.put(c.childId, c);
             if (!patientListModel.contains(c.childId)) {
                 patientListModel.addElement(c.childId);
             }
             patientList.setSelectedValue(c.childId, true);
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(null, "Please enter valid numeric values.\n" + ex.getMessage());
+            JOptionPane.showMessageDialog(null, "Save failed.\n" + ex.getMessage());
         }
     }
 
@@ -353,8 +373,7 @@ public class DesktopApp {
             String output = runRulesForMode(c);
             outputArea.setText(output);
             showStyledResultDialog(c.childId, output);
-            runHistory.computeIfAbsent(selectedId, id -> new ArrayList<>())
-                    .add(LocalDateTime.now() + "\n" + output);
+            storage.saveRunHistory(selectedId, output);
         } catch (Exception ex) {
             String errorText = "Rule execution failed:\n" + ex.getClass().getSimpleName() + ": " + ex.getMessage();
             outputArea.setText(errorText);
@@ -368,16 +387,17 @@ public class DesktopApp {
             JOptionPane.showMessageDialog(null, "Please select a patient first.");
             return;
         }
-        List<String> history = runHistory.get(selectedId);
+        List<RunHistoryEntry> history = storage.findHistoryForChild(selectedId);
         if (history == null || history.isEmpty()) {
-            outputArea.setText("No in-memory history yet for patient " + selectedId + ".\nRun rules at least once.");
+            outputArea.setText("No PostgreSQL run history yet for patient " + selectedId + ".\nRun rules at least once.");
             return;
         }
         StringBuilder sb = new StringBuilder();
-        sb.append("In-memory run history for patient ").append(selectedId).append("\n\n");
+        sb.append("PostgreSQL run history for patient ").append(selectedId).append("\n\n");
         for (int i = 0; i < history.size(); i++) {
             sb.append("Run #").append(i + 1).append("\n");
-            sb.append(history.get(i)).append("\n");
+            sb.append(history.get(i).getCreatedAt()).append("\n");
+            sb.append(history.get(i).getReport()).append("\n");
             sb.append("----------------------------------------\n");
         }
         outputArea.setText(sb.toString());
@@ -808,27 +828,6 @@ public class DesktopApp {
                 .replace("&", "&amp;")
                 .replace("<", "&lt;")
                 .replace(">", "&gt;");
-    }
-
-    private static class PatientCase {
-        Long childId;
-        int ageInMonths;
-        int rr1;
-        int spo21;
-        boolean chest1;
-        boolean grunting1;
-        boolean apnea1;
-        boolean cyanosis1;
-
-        int rr2;
-        int spo22;
-        boolean chest2;
-        boolean grunting2;
-        boolean apnea2;
-        boolean cyanosis2;
-
-        int intakePercent;
-        boolean poorFeeding;
     }
 }
 
