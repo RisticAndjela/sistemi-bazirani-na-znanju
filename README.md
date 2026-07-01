@@ -45,14 +45,16 @@ cd backend
 mvn -U clean install
 
 cd ../frontend
-mvn clean compile exec:java -Dexec.mainClass=com.sbnz.frontend.DesktopApp
+mvn clean compile
+mvn exec:java -Dexec.mainClass=com.sbnz.frontend.DesktopApp
 ```
 
 Web version:
 
 ```bash
 cd frontend
-mvn clean compile exec:java -Dexec.mainClass=com.sbnz.frontend.WebApiApp
+mvn clean compile
+mvn exec:java -Dexec.mainClass=com.sbnz.frontend.WebApiApp
 
 cd ../web-frontend
 npm.cmd install
@@ -67,6 +69,7 @@ npm.cmd start
   - database: `sbnz_respiratory`
   - user: `sbnz_user`
   - password: `sbnz_pass`
+- Docker PostgreSQL init now inserts demo patients automatically if `patient_cases` is empty on first database creation.
 - The desktop app auto-creates tables `patient_cases` and `rule_run_history` if they do not exist.
 - Demo patients are inserted from `frontend/data/demo-children.csv` only when the database is empty.
 - Connection can be overridden with `SBNZ_DB_URL`, `SBNZ_DB_USER`, and `SBNZ_DB_PASSWORD`.

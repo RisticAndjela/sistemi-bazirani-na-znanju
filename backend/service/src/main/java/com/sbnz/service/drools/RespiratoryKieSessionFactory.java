@@ -13,6 +13,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public final class RespiratoryKieSessionFactory {
@@ -39,7 +40,7 @@ public final class RespiratoryKieSessionFactory {
 
         for (String drl : DRL_FILES) {
             helper.addResource(
-                    ks.getResources().newClassPathResource(RULE_ROOT + drl),
+                    ks.getResources().newInputStreamResource(openRequiredResource(RULE_ROOT + drl)),
                     ResourceType.DRL
             );
         }
@@ -138,11 +139,11 @@ public final class RespiratoryKieSessionFactory {
         for (String[] row : readCsv("rules/templates/red-flags.template")) {
             String flagId = row[0];
             String flagType = row[1];
-            String eventPattern = row[4];
-            String salience = row[5];
-            String action = row[9];
-            String explanationCode = row[11];
-            String reason = row[12];
+            String eventPattern = String.join(",", Arrays.copyOfRange(row, 4, row.length - 8)).trim();
+            String salience = row[row.length - 8];
+            String action = row[row.length - 4];
+            String explanationCode = row[row.length - 2];
+            String reason = row[row.length - 1];
 
             drl.append("rule \"TPL RED FLAG ").append(flagId).append(" ").append(flagType).append("\"\n")
                     .append("salience ").append(salience).append("\n")
@@ -170,12 +171,8 @@ public final class RespiratoryKieSessionFactory {
     }
 
     private static List<String[]> readCsv(String resourcePath) {
-        InputStream input = Thread.currentThread().getContextClassLoader().getResourceAsStream(resourcePath);
-        if (input == null) {
-            throw new IllegalStateException("Template data not found: " + resourcePath);
-        }
-
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(input, StandardCharsets.UTF_8))) {
+        try (InputStream input = openRequiredResource(resourcePath);
+             BufferedReader reader = new BufferedReader(new InputStreamReader(input, StandardCharsets.UTF_8))) {
             List<String[]> rows = new ArrayList<>();
             String line;
             boolean header = true;
@@ -193,5 +190,27 @@ public final class RespiratoryKieSessionFactory {
         } catch (IOException e) {
             throw new IllegalStateException("Cannot read template data: " + resourcePath, e);
         }
+    }
+
+    private static InputStream openRequiredResource(String resourcePath) {
+        ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
+        if (contextClassLoader != null) {
+            InputStream input = contextClassLoader.getResourceAsStream(resourcePath);
+            if (input != null) {
+                return input;
+            }
+        }
+
+        InputStream input = RespiratoryKieSessionFactory.class.getClassLoader().getResourceAsStream(resourcePath);
+        if (input != null) {
+            return input;
+        }
+
+        input = RespiratoryKieSessionFactory.class.getResourceAsStream("/" + resourcePath);
+        if (input != null) {
+            return input;
+        }
+
+        throw new IllegalStateException("Template data not found: " + resourcePath);
     }
 }

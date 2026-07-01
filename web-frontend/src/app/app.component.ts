@@ -43,6 +43,13 @@ interface ApiEnvelope<T> {
   message: string;
 }
 
+type RawPatientCase = Partial<PatientCase> & {
+  child_id?: number;
+  age_in_months?: number;
+  intake_percent?: number;
+  poor_feeding?: boolean;
+};
+
 interface ParsedSession {
   title: string;
   summary: string[];
@@ -116,6 +123,8 @@ export class AppComponent {
       this.upsertPatient(response);
       this.selectedPatientId.set(response.childId);
       this.feedback.set(`Patient ${response.childId} saved.`);
+    } catch (error) {
+      this.handleError(error, 'Saving patient failed.');
     } finally {
       this.saving.set(false);
     }
@@ -138,6 +147,8 @@ export class AppComponent {
       this.selectedPatientId.set(response.patientCase.childId);
       await this.loadHistory(response.patientCase.childId, false);
       this.feedback.set(`Rules executed for patient ${response.patientCase.childId}.`);
+    } catch (error) {
+      this.handleError(error, 'Rule execution failed.');
     } finally {
       this.runBusy.set(false);
     }
@@ -150,13 +161,21 @@ export class AppComponent {
 
   async resetLearnedSession(): Promise<void> {
     this.feedback.set('Resetting learned session...');
-    await this.post<void>(`${this.apiBase}/rules/reset-learned-session`, {});
-    this.feedback.set('Learned session reset. Future learned runs start clean.');
+    try {
+      await this.post<void>(`${this.apiBase}/rules/reset-learned-session`, {});
+      this.feedback.set('Learned session reset. Future learned runs start clean.');
+    } catch (error) {
+      this.handleError(error, 'Reset learned session failed.');
+    }
   }
 
   async refreshPatients(): Promise<void> {
-    await this.loadPatients();
-    this.feedback.set('Patient list refreshed.');
+    try {
+      await this.loadPatients();
+      this.feedback.set('Patient list refreshed.');
+    } catch (error) {
+      this.handleError(error, 'Refreshing patients failed.');
+    }
   }
 
   labelForPreset(name: PresetName): string {
@@ -179,6 +198,20 @@ export class AppComponent {
     return patient.childId;
   }
 
+  updateNumberField(field: keyof PatientCase, value: number | string): void {
+    this.form.set({
+      ...this.form(),
+      [field]: Number(value),
+    });
+  }
+
+  updateBooleanField(field: keyof PatientCase, value: boolean): void {
+    this.form.set({
+      ...this.form(),
+      [field]: value,
+    });
+  }
+
   private async loadInitialState(): Promise<void> {
     this.loading.set(true);
     try {
@@ -187,6 +220,8 @@ export class AppComponent {
       if (first) {
         this.loadPatient(first);
       }
+    } catch (error) {
+      this.handleError(error, 'Initial load failed.');
     } finally {
       this.loading.set(false);
     }
@@ -198,8 +233,8 @@ export class AppComponent {
   }
 
   private async loadPatients(): Promise<void> {
-    const response = await this.get<PatientCase[]>(`${this.apiBase}/patients`);
-    this.patients.set(response);
+    const response = await this.get<PatientCase[] | { patient_cases?: RawPatientCase[] }>(`${this.apiBase}/patients`);
+    this.patients.set(this.normalizePatientList(response));
   }
 
   private async loadHistory(childId: number, activateView: boolean): Promise<void> {
@@ -208,6 +243,14 @@ export class AppComponent {
     if (activateView) {
       this.activeView.set('history');
       this.feedback.set(response.length ? `History loaded for patient ${childId}.` : `No history yet for patient ${childId}.`);
+    }
+  }
+
+  private handleError(error: unknown, fallbackMessage: string): void {
+    const message = error instanceof Error ? error.message : fallbackMessage;
+    this.feedback.set(message || fallbackMessage);
+    if (message.includes('Failed to fetch')) {
+      this.connectionStatus.set('API unavailable');
     }
   }
 
@@ -362,29 +405,83 @@ export class AppComponent {
     return line.startsWith('- ') ? line.slice(2) : line;
   }
 
+  private normalizePatientList(payload: PatientCase[] | { patient_cases?: RawPatientCase[] }): PatientCase[] {
+    if (Array.isArray(payload)) {
+      return payload.map((patient) => this.normalizePatientCase(patient));
+    }
+
+    const patients = Array.isArray(payload?.patient_cases) ? payload.patient_cases : [];
+    return patients.map((patient) => this.normalizePatientCase(patient));
+  }
+
+  private normalizePatientCase(patient: RawPatientCase): PatientCase {
+    return {
+      childId: patient.childId ?? patient.child_id ?? 0,
+      ageInMonths: patient.ageInMonths ?? patient.age_in_months ?? 0,
+      rr1: patient.rr1 ?? 0,
+      spo21: patient.spo21 ?? 0,
+      chest1: patient.chest1 ?? false,
+      grunting1: patient.grunting1 ?? false,
+      apnea1: patient.apnea1 ?? false,
+      cyanosis1: patient.cyanosis1 ?? false,
+      rr2: patient.rr2 ?? 0,
+      spo22: patient.spo22 ?? 0,
+      chest2: patient.chest2 ?? false,
+      grunting2: patient.grunting2 ?? false,
+      apnea2: patient.apnea2 ?? false,
+      cyanosis2: patient.cyanosis2 ?? false,
+      intakePercent: patient.intakePercent ?? patient.intake_percent ?? 0,
+      poorFeeding: patient.poorFeeding ?? patient.poor_feeding ?? false,
+    };
+  }
+
   private async get<T>(url: string): Promise<T> {
-    const envelope = await fetch(url).then(async (response) => {
-      const json = (await response.json()) as ApiEnvelope<T>;
-      if (!response.ok || !json.success) {
-        throw new Error(json.message || 'Request failed.');
+    const payload = await fetch(url).then(async (response) => {
+      const json = (await response.json()) as ApiEnvelope<T> | T;
+      if (!response.ok) {
+        const message = this.readEnvelopeMessage(json) || 'Request failed.';
+        throw new Error(message);
       }
-      return json;
+      return this.unwrapApiPayload(json);
     });
-    return envelope.data;
+    return payload as T;
   }
 
   private async post<T>(url: string, body: unknown): Promise<T> {
-    const envelope = await fetch(url, {
+    const payload = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     }).then(async (response) => {
-      const json = (await response.json()) as ApiEnvelope<T>;
-      if (!response.ok || !json.success) {
-        throw new Error(json.message || 'Request failed.');
+      const json = (await response.json()) as ApiEnvelope<T> | T;
+      if (!response.ok) {
+        const message = this.readEnvelopeMessage(json) || 'Request failed.';
+        throw new Error(message);
       }
-      return json;
+      return this.unwrapApiPayload(json);
     });
-    return envelope.data;
+    return payload as T;
+  }
+
+  private unwrapApiPayload<T>(payload: ApiEnvelope<T> | T): T {
+    if (this.isApiEnvelope(payload)) {
+      if (!payload.success) {
+        throw new Error(payload.message || 'Request failed.');
+      }
+      return payload.data;
+    }
+    return payload;
+  }
+
+  private readEnvelopeMessage(payload: unknown): string {
+    if (typeof payload === 'object' && payload !== null && 'message' in payload) {
+      const message = (payload as { message?: unknown }).message;
+      return typeof message === 'string' ? message : '';
+    }
+    return '';
+  }
+
+  private isApiEnvelope<T>(payload: ApiEnvelope<T> | T): payload is ApiEnvelope<T> {
+    return typeof payload === 'object' && payload !== null && 'success' in payload && 'data' in payload;
   }
 }

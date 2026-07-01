@@ -88,34 +88,34 @@
         <div class="form-grid">
           <label>
             <span>Child ID</span>
-            <input type="number" [ngModel]="form().childId" (ngModelChange)="form.set({ ...form(), childId: +$event })" />
+            <input type="number" [ngModel]="form().childId" (ngModelChange)="updateNumberField('childId', $event)" />
           </label>
           <label>
             <span>Age in months</span>
-            <input type="number" [ngModel]="form().ageInMonths" (ngModelChange)="form.set({ ...form(), ageInMonths: +$event })" />
+            <input type="number" [ngModel]="form().ageInMonths" (ngModelChange)="updateNumberField('ageInMonths', $event)" />
           </label>
           <label>
             <span>Earlier RR</span>
-            <input type="number" [ngModel]="form().rr1" (ngModelChange)="form.set({ ...form(), rr1: +$event })" />
+            <input type="number" [ngModel]="form().rr1" (ngModelChange)="updateNumberField('rr1', $event)" />
           </label>
           <label>
             <span>Earlier SpO2</span>
-            <input type="number" [ngModel]="form().spo21" (ngModelChange)="form.set({ ...form(), spo21: +$event })" />
+            <input type="number" [ngModel]="form().spo21" (ngModelChange)="updateNumberField('spo21', $event)" />
           </label>
           <label>
             <span>Current RR</span>
-            <input type="number" [ngModel]="form().rr2" (ngModelChange)="form.set({ ...form(), rr2: +$event })" />
+            <input type="number" [ngModel]="form().rr2" (ngModelChange)="updateNumberField('rr2', $event)" />
           </label>
           <label>
             <span>Current SpO2</span>
-            <input type="number" [ngModel]="form().spo22" (ngModelChange)="form.set({ ...form(), spo22: +$event })" />
+            <input type="number" [ngModel]="form().spo22" (ngModelChange)="updateNumberField('spo22', $event)" />
           </label>
           <label class="full">
             <span>Hydration intake %</span>
             <input
               type="number"
               [ngModel]="form().intakePercent"
-              (ngModelChange)="form.set({ ...form(), intakePercent: +$event })"
+              (ngModelChange)="updateNumberField('intakePercent', $event)"
             />
           </label>
         </div>
@@ -123,23 +123,23 @@
         <div class="checkbox-sections">
           <div class="check-card">
             <h3>Earlier assessment</h3>
-            <label><input type="checkbox" [ngModel]="form().chest1" (ngModelChange)="form.set({ ...form(), chest1: $event })" />Chest indrawing</label>
-            <label><input type="checkbox" [ngModel]="form().grunting1" (ngModelChange)="form.set({ ...form(), grunting1: $event })" />Grunting</label>
-            <label><input type="checkbox" [ngModel]="form().apnea1" (ngModelChange)="form.set({ ...form(), apnea1: $event })" />Apnea</label>
-            <label><input type="checkbox" [ngModel]="form().cyanosis1" (ngModelChange)="form.set({ ...form(), cyanosis1: $event })" />Cyanosis</label>
+            <label><input type="checkbox" [ngModel]="form().chest1" (ngModelChange)="updateBooleanField('chest1', $event)" />Chest indrawing</label>
+            <label><input type="checkbox" [ngModel]="form().grunting1" (ngModelChange)="updateBooleanField('grunting1', $event)" />Grunting</label>
+            <label><input type="checkbox" [ngModel]="form().apnea1" (ngModelChange)="updateBooleanField('apnea1', $event)" />Apnea</label>
+            <label><input type="checkbox" [ngModel]="form().cyanosis1" (ngModelChange)="updateBooleanField('cyanosis1', $event)" />Cyanosis</label>
           </div>
 
           <div class="check-card">
             <h3>Current assessment</h3>
-            <label><input type="checkbox" [ngModel]="form().chest2" (ngModelChange)="form.set({ ...form(), chest2: $event })" />Chest indrawing</label>
-            <label><input type="checkbox" [ngModel]="form().grunting2" (ngModelChange)="form.set({ ...form(), grunting2: $event })" />Grunting</label>
-            <label><input type="checkbox" [ngModel]="form().apnea2" (ngModelChange)="form.set({ ...form(), apnea2: $event })" />Apnea</label>
-            <label><input type="checkbox" [ngModel]="form().cyanosis2" (ngModelChange)="form.set({ ...form(), cyanosis2: $event })" />Cyanosis</label>
+            <label><input type="checkbox" [ngModel]="form().chest2" (ngModelChange)="updateBooleanField('chest2', $event)" />Chest indrawing</label>
+            <label><input type="checkbox" [ngModel]="form().grunting2" (ngModelChange)="updateBooleanField('grunting2', $event)" />Grunting</label>
+            <label><input type="checkbox" [ngModel]="form().apnea2" (ngModelChange)="updateBooleanField('apnea2', $event)" />Apnea</label>
+            <label><input type="checkbox" [ngModel]="form().cyanosis2" (ngModelChange)="updateBooleanField('cyanosis2', $event)" />Cyanosis</label>
           </div>
 
           <div class="check-card accent-card">
             <h3>Hydration flag</h3>
-            <label><input type="checkbox" [ngModel]="form().poorFeeding" (ngModelChange)="form.set({ ...form(), poorFeeding: $event })" />Poor feeding</label>
+            <label><input type="checkbox" [ngModel]="form().poorFeeding" (ngModelChange)="updateBooleanField('poorFeeding', $event)" />Poor feeding</label>
             <p>Use the same Boolean markers from the desktop UI so rule output stays comparable.</p>
           </div>
         </div>

@@ -9,6 +9,10 @@
   </parent>
   <artifactId>frontend</artifactId>
 
+  <properties>
+    <exec.mainClass>com.sbnz.frontend.DesktopApp</exec.mainClass>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>com.sbnz</groupId>
@@ -53,13 +57,21 @@
   </dependencies>
 
   <build>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+      </resource>
+      <resource>
+        <directory>../backend/kjar/src/main/resources</directory>
+      </resource>
+    </resources>
     <plugins>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
         <version>3.1.0</version>
         <configuration>
-          <mainClass>com.sbnz.frontend.DesktopApp</mainClass>
+          <mainClass>${exec.mainClass}</mainClass>
         </configuration>
       </plugin>
     </plugins>

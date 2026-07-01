@@ -23,7 +23,15 @@ if %errorlevel% neq 0 (
 
 echo Make sure PostgreSQL is running first with run-postgres.bat.
 echo Launching desktop frontend app...
-mvn clean compile exec:java "-Dexec.mainClass=com.sbnz.frontend.DesktopApp"
+mvn clean compile
+if %errorlevel% neq 0 (
+  echo Frontend compile failed.
+  echo Make sure backend was built first by running run-backend.bat.
+  pause
+  exit /b 1
+)
+
+mvn exec:java "-Dexec.mainClass=com.sbnz.frontend.DesktopApp"
 if %errorlevel% neq 0 (
   echo Frontend launch failed.
   echo Make sure backend was built first by running run-backend.bat.

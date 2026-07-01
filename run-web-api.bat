@@ -23,7 +23,15 @@ if %errorlevel% neq 0 (
 
 echo Make sure PostgreSQL is running first with run-postgres.bat.
 echo Starting web API on http://localhost:8080 ...
-mvn clean compile exec:java "-Dexec.mainClass=com.sbnz.frontend.WebApiApp"
+mvn clean compile
+if %errorlevel% neq 0 (
+  echo Web API compile failed.
+  echo Make sure backend artifacts were built first by running run-backend.bat.
+  pause
+  exit /b 1
+)
+
+mvn exec:java "-Dexec.mainClass=com.sbnz.frontend.WebApiApp"
 if %errorlevel% neq 0 (
   echo Web API launch failed.
   echo Make sure backend artifacts were built first by running run-backend.bat.
