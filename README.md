@@ -14,51 +14,55 @@ This repository has two top-level apps:
 
 ## Run on any machine (double-click option)
 
+The web stack now runs through Docker instead of local Maven + Node processes.
+
 From repository root you can use:
 
 - `run-postgres.bat`
   - starts PostgreSQL in Docker on `localhost:5432`
 - `run-backend.bat`
-  - builds and installs backend artifacts (`model`, `kjar`, `service`)
+  - builds the Docker image that packages backend artifacts for the web API
 - `run-frontend.bat`
-  - compiles and starts the desktop frontend app connected to PostgreSQL
+  - starts the desktop Swing frontend locally connected to PostgreSQL
 - `run-web-api.bat`
-  - starts a lightweight REST API over the same frontend Drools + PostgreSQL logic
+  - starts the Dockerized REST API on `http://localhost:8080`
 - `run-web-frontend.bat`
-  - installs Angular packages if needed and starts the web frontend on `http://localhost:4200`
+  - starts the Dockerized Angular frontend on `http://localhost:4200`
 - `run-web.bat`
-  - opens both the API and Angular frontend in separate terminal windows
+  - starts PostgreSQL, the API, and Angular together through Docker Compose
 
 Recommended order:
 
 1. Double-click `run-postgres.bat`
-2. Double-click `run-backend.bat`
-3. For desktop: double-click `run-frontend.bat`
-4. For web: double-click `run-web.bat`
+2. For web: double-click `run-web.bat`
+3. For desktop only: double-click `run-frontend.bat`
 
 ## Terminal alternative (relative, machine-independent)
 
 ```bash
+docker compose up -d --build postgres web-api web-frontend
+```
+
+Desktop app remains a local Java Swing process:
+
+```bash
 docker compose up -d postgres
-
-cd backend
-mvn -U clean install
-
-cd ../frontend
-mvn clean compile
+cd frontend
+mvn compile
 mvn exec:java -Dexec.mainClass=com.sbnz.frontend.DesktopApp
 ```
 
-Web version:
+If you want only the API in Docker:
 
 ```bash
-cd frontend
-mvn clean compile
-mvn exec:java -Dexec.mainClass=com.sbnz.frontend.WebApiApp
+docker compose up -d --build postgres web-api
+```
 
-cd ../web-frontend
-npm.cmd install
-npm.cmd start
+If port `8080` is already occupied on your machine, override the host port before starting Docker:
+
+```bat
+set SBNZ_WEB_API_HOST_PORT=8081
+run-web-api.bat
 ```
 
 ## Notes
@@ -69,11 +73,15 @@ npm.cmd start
   - database: `sbnz_respiratory`
   - user: `sbnz_user`
   - password: `sbnz_pass`
+- Docker Compose exposes:
+  - Angular frontend on `http://localhost:4200`
+  - Web API on `http://localhost:8080` by default
+- If `8080` is already used by another app, set `SBNZ_WEB_API_HOST_PORT` to a free host port such as `8081`.
 - Docker PostgreSQL init now inserts demo patients automatically if `patient_cases` is empty on first database creation.
 - The desktop app auto-creates tables `patient_cases` and `rule_run_history` if they do not exist.
 - Demo patients are inserted from `frontend/data/demo-children.csv` only when the database is empty.
 - Connection can be overridden with `SBNZ_DB_URL`, `SBNZ_DB_USER`, and `SBNZ_DB_PASSWORD`.
 - The web API listens on `localhost:8080` by default and can be changed with `-Dsbnz.web.port=...`.
-- The Angular dev server proxies `/api` calls to the local Java API.
+- The Angular dev server proxies `/api` calls to the Java API, using `localhost` locally and the Docker service name inside Compose.
 - In DBeaver, create a PostgreSQL connection with the values above and you will be able to inspect stored patients and run history.
-- If Maven or Java is missing from PATH, install them and reopen terminal.
+- `run-frontend.bat` still requires local Java and Maven because Docker is not used for the desktop Swing GUI.

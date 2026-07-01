@@ -1,40 +1,36 @@
 @echo off
 setlocal
-cd /d "%~dp0\frontend"
+cd /d "%~dp0"
 
-set "PROJECT_JAVA_HOME=C:\Program Files\Microsoft\jdk-11.0.16.101-hotspot"
-if exist "%PROJECT_JAVA_HOME%\bin\java.exe" (
-  set "JAVA_HOME=%PROJECT_JAVA_HOME%"
-  set "PATH=%JAVA_HOME%\bin;%PATH%"
-  echo Using project Java from %PROJECT_JAVA_HOME%
-) else (
-  echo Project JDK 11 was not found at:
-  echo   %PROJECT_JAVA_HOME%
-  echo Falling back to Java from PATH.
-)
+if "%SBNZ_WEB_API_HOST_PORT%"=="" set "SBNZ_WEB_API_HOST_PORT=8080"
 
-where mvn >nul 2>nul
+where docker >nul 2>nul
 if %errorlevel% neq 0 (
-  echo Maven is not available in PATH.
-  echo Install Maven and reopen terminal, then run this file again.
+  echo Docker is not available in PATH.
+  echo Install Docker Desktop and run this file again.
   pause
   exit /b 1
 )
 
-echo Make sure PostgreSQL is running first with run-postgres.bat.
-echo Starting web API on http://localhost:8080 ...
-mvn clean compile
-if %errorlevel% neq 0 (
-  echo Web API compile failed.
-  echo Make sure backend artifacts were built first by running run-backend.bat.
+netstat -ano | findstr /r /c:":%SBNZ_WEB_API_HOST_PORT% .*LISTENING" >nul
+if %errorlevel% equ 0 (
+  echo Port %SBNZ_WEB_API_HOST_PORT% is already in use on this machine.
+  echo Set SBNZ_WEB_API_HOST_PORT to a free port, for example:
+  echo   set SBNZ_WEB_API_HOST_PORT=8081
+  echo Then run this file again.
   pause
   exit /b 1
 )
 
-mvn exec:java "-Dexec.mainClass=com.sbnz.frontend.WebApiApp"
+echo Starting web API in Docker on http://localhost:%SBNZ_WEB_API_HOST_PORT% ...
+docker compose up -d --build postgres web-api
 if %errorlevel% neq 0 (
-  echo Web API launch failed.
-  echo Make sure backend artifacts were built first by running run-backend.bat.
+  echo Web API startup failed.
   pause
   exit /b 1
 )
+
+echo Web API container is starting.
+echo Health endpoint: http://localhost:%SBNZ_WEB_API_HOST_PORT%/api/health
+echo To watch logs run: docker compose logs -f web-api
+pause

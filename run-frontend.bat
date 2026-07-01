@@ -1,5 +1,21 @@
 @echo off
 setlocal
+cd /d "%~dp0"
+
+where docker >nul 2>nul
+if %errorlevel% equ 0 (
+  echo Starting PostgreSQL in Docker on localhost:5432 ...
+  docker compose up -d postgres
+  if %errorlevel% neq 0 (
+    echo PostgreSQL startup failed.
+    pause
+    exit /b 1
+  )
+) else (
+  echo Docker is not available in PATH.
+  echo Continuing without auto-starting PostgreSQL.
+)
+
 cd /d "%~dp0\frontend"
 
 set "PROJECT_JAVA_HOME=C:\Program Files\Microsoft\jdk-11.0.16.101-hotspot"
@@ -21,9 +37,9 @@ if %errorlevel% neq 0 (
   exit /b 1
 )
 
-echo Make sure PostgreSQL is running first with run-postgres.bat.
+echo Desktop Swing app still runs locally; only PostgreSQL is managed through Docker.
 echo Launching desktop frontend app...
-mvn clean compile
+mvn compile
 if %errorlevel% neq 0 (
   echo Frontend compile failed.
   echo Make sure backend was built first by running run-backend.bat.

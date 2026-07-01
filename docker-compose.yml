@@ -12,6 +12,39 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sbnz_user -d sbnz_respiratory"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  web-api:
+    build:
+      context: .
+      dockerfile: docker/web-api.Dockerfile
+    container_name: sbnz-web-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SBNZ_DB_URL: jdbc:postgresql://postgres:5432/sbnz_respiratory
+      SBNZ_DB_USER: sbnz_user
+      SBNZ_DB_PASSWORD: sbnz_pass
+      MAVEN_OPTS: -Xmx512m
+    ports:
+      - "${SBNZ_WEB_API_HOST_PORT:-8080}:8080"
+
+  web-frontend:
+    build:
+      context: .
+      dockerfile: docker/web-frontend.Dockerfile
+    container_name: sbnz-web-frontend
+    restart: unless-stopped
+    depends_on:
+      - web-api
+    ports:
+      - "4200:4200"
 
 volumes:
   postgres-data:

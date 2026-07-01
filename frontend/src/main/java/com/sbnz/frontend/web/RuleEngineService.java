@@ -30,6 +30,7 @@ public class RuleEngineService {
     private KieSession learnedSession;
     private final Map<Long, FactHandle> learnedChildProfiles = new LinkedHashMap<>();
     private final Map<Long, FactHandle> learnedHydrationFacts = new LinkedHashMap<>();
+    private final Map<Long, List<FactHandle>> learnedRespiratoryFacts = new LinkedHashMap<>();
 
     public synchronized String runRulesForMode(PatientCase patientCase, String sessionMode) {
         if ("FRESH_ONLY".equals(sessionMode)) {
@@ -71,6 +72,7 @@ public class RuleEngineService {
         learnedSession = null;
         learnedChildProfiles.clear();
         learnedHydrationFacts.clear();
+        learnedRespiratoryFacts.clear();
     }
 
     public String buildStyledHtmlReport(String output) {
@@ -124,6 +126,7 @@ public class RuleEngineService {
 
     private void refreshLearnedSessionForChild(KieSession ksession, PatientCase patientCase) {
         removeDerivedFactsForChild(ksession, patientCase.childId);
+        removeRespiratoryEventsForChild(ksession, patientCase.childId);
 
         FactHandle existingChild = learnedChildProfiles.get(patientCase.childId);
         if (existingChild != null) {
@@ -159,8 +162,10 @@ public class RuleEngineService {
                 patientCase.apnea2,
                 patientCase.cyanosis2
         );
-        ksession.insert(first);
-        ksession.insert(second);
+        List<FactHandle> respiratoryHandles = new ArrayList<>();
+        respiratoryHandles.add(ksession.insert(first));
+        respiratoryHandles.add(ksession.insert(second));
+        learnedRespiratoryFacts.put(patientCase.childId, respiratoryHandles);
     }
 
     private void removeDerivedFactsForChild(KieSession ksession, Long childId) {
@@ -175,6 +180,23 @@ public class RuleEngineService {
             if (object instanceof Recommendation) {
                 Recommendation recommendation = (Recommendation) object;
                 if (childId.equals(recommendation.getChildId())) {
+                    handlesToDelete.add(ksession.getFactHandle(object));
+                }
+            }
+        }
+        for (FactHandle handle : handlesToDelete) {
+            if (handle != null) {
+                ksession.delete(handle);
+            }
+        }
+    }
+
+    private void removeRespiratoryEventsForChild(KieSession ksession, Long childId) {
+        List<FactHandle> handlesToDelete = new ArrayList<>();
+        for (Object object : ksession.getObjects()) {
+            if (object instanceof RespiratoryAssessmentEvent) {
+                RespiratoryAssessmentEvent event = (RespiratoryAssessmentEvent) object;
+                if (childId.equals(event.getChildId())) {
                     handlesToDelete.add(ksession.getFactHandle(object));
                 }
             }

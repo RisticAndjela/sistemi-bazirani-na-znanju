@@ -137,6 +137,7 @@ public class WebApiApp {
             } catch (IllegalArgumentException ex) {
                 sendJson(exchange, 400, new ApiResponse(false, null, ex.getMessage()));
             } catch (Exception ex) {
+                ex.printStackTrace();
                 sendJson(exchange, 500, new ApiResponse(false, null, ex.getMessage()));
             } finally {
                 exchange.close();

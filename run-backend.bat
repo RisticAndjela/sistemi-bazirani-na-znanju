@@ -1,33 +1,23 @@
 @echo off
 setlocal
-cd /d "%~dp0\backend"
+cd /d "%~dp0"
 
-set "PROJECT_JAVA_HOME=C:\Program Files\Microsoft\jdk-11.0.16.101-hotspot"
-if exist "%PROJECT_JAVA_HOME%\bin\java.exe" (
-  set "JAVA_HOME=%PROJECT_JAVA_HOME%"
-  set "PATH=%JAVA_HOME%\bin;%PATH%"
-  echo Using project Java from %PROJECT_JAVA_HOME%
-) else (
-  echo Project JDK 11 was not found at:
-  echo   %PROJECT_JAVA_HOME%
-  echo Falling back to Java from PATH.
-)
-
-where mvn >nul 2>nul
+where docker >nul 2>nul
 if %errorlevel% neq 0 (
-  echo Maven is not available in PATH.
-  echo Install Maven and reopen terminal, then run this file again.
+  echo Docker is not available in PATH.
+  echo Install Docker Desktop and run this file again.
   pause
   exit /b 1
 )
 
-echo Building backend modules (model, kjar, service)...
-mvn -U clean install
+echo Building Docker image that includes backend artifacts...
+docker compose build web-api
 if %errorlevel% neq 0 (
-  echo Backend build failed.
+  echo Docker build failed.
   pause
   exit /b 1
 )
 
-echo Backend build completed.
+echo Web API image was built successfully.
+echo Backend modules are now packaged inside the Docker image.
 pause
